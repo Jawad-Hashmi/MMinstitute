@@ -8,6 +8,7 @@ const {
 } = require("../controller/admin_controller");
 
 const checkAdminExists = require("../Middleware/AdminMiddleware");
+const authMiddleware = require("../Middleware/auth");
 
 const router = express.Router();
 
@@ -42,7 +43,7 @@ router.post("/forgot-Password", forgotPassword);
 router.post("/ResetPassword", resetPassword);
 
 // Dummy Protected Route
-router.get("/profile", (req, res) => {
+router.get("/profile", authMiddleware, (req, res) => {
   res.json({ message: `Welcome ${req.admin?.email || "Guest"}` });
 });
 
