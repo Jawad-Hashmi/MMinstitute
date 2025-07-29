@@ -82,6 +82,7 @@ exports.forgotPassword = async (req, res) => {
 // Reset Password
 exports.resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
+  console.log("🚀 ~ newPassword:", newPassword);
 
   try {
     const admin = await Admin.findOne({
@@ -93,10 +94,12 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
-    admin.password = await bcrypt.hash(newPassword, 10);
+    admin.password = newPassword;
+    console.log("Before Save", admin.password);
     admin.resetToken = undefined;
     admin.resetTokenExpire = undefined;
     await admin.save();
+    console.log("After Save", admin.password);
 
     res.status(200).json({ message: "Password reset Successfully" });
   } catch (err) {
