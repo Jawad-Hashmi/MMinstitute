@@ -108,3 +108,21 @@ exports.resetPassword = async (req, res) => {
     return res.status(500).json({ message: "Server Error" });
   }
 };
+exports.logoutUser = async (req, res) => {
+  try {
+    const userDoc = await User.findById(req.user.id);
+    if (!userDoc) {
+      return res.status(400).json({ message: "User not Found" });
+    }
+
+    userDoc.resetToken = undefined;
+    userDoc.resetTokenExpire = undefined;
+    await userDoc.save();
+
+    return res.status(200).json({ message: "Logout Successfully" });
+  } catch (err) {
+    console.error("Logout Error", err.message);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+

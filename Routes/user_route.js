@@ -5,6 +5,7 @@ const {
   loginUser,
   forgotPassword,
   resetPassword,
+  logoutUser,
 } = require("../controller/user_controller");
 
 const {
@@ -32,5 +33,6 @@ router.post(
   checkValidation,
   resetPassword
 );
+router.post('/logout',verifyToken,logoutUser);
 
 module.exports = router;
