@@ -5,6 +5,7 @@ const {
   loginAdmin,
   forgotPassword,
   resetPassword,
+  logoutAdmin,
 } = require("../controller/admin_controller");
 
 const checkAdminExists = require("../Middleware/AdminMiddleware");
@@ -46,5 +47,7 @@ router.post("/ResetPassword", resetPassword);
 router.get("/profile", authMiddleware, (req, res) => {
   res.json({ message: `Welcome ${req.admin?.email || "Guest"}` });
 });
+
+router.post("/logout", authMiddleware, logoutAdmin);
 
 module.exports = router;

@@ -106,3 +106,24 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.logoutAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin.id);
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // Optional: Clear reset token if used
+    admin.resetToken = undefined;
+    admin.resetTokenExpire = undefined;
+    await admin.save();
+
+    // You can't "invalidate" a JWT unless you use a blacklist or short expiry
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ message: "Server error during logout" });
+  }
+};
