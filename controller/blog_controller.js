@@ -15,7 +15,7 @@ exports.postBlog = async (req, res) => {
     });
 
     await blog.save();
-    res.status(201).json({ message: "Blog posted thanks successfully", blog });
+    res.status(201).json({ message: "Blog posted successfully", blog });
   } catch (err) {
     console.error("Post blog error:", err);
     res.status(500).json({ message: "Server error while posting blog" });
