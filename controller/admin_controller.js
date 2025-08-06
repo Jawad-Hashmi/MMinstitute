@@ -12,14 +12,14 @@ exports.registerAdmin = async (req, res) => {
   }
 
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     const existingAdmin = await Admin.findOne({ email });
 
     if (existingAdmin) {
       return res.status(400).json({ message: "Email Already Exist" });
     }
 
-    const newadmin = new Admin({ name, email, password });
+    const newadmin = new Admin({ name, email, password, role });
     await newadmin.save();
 
     res.status(201).json({ message: "Admin Registered Succesfully" });
@@ -51,7 +51,9 @@ exports.loginAdmin = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    return res.status(200).json({ token, message: "Login Successfully" });
+    return res
+      .status(200)
+      .json({ token, role: admin.role, message: "Login Successfully" });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server Error" });
@@ -110,21 +112,17 @@ exports.resetPassword = async (req, res) => {
 exports.logoutAdmin = async (req, res) => {
   try {
     const admin = await Admin.findById(req.admin.id);
-
     if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
+      return res.status(400).json({ message: "Admin not Found" });
     }
 
-    // Optional: Clear reset token if used
     admin.resetToken = undefined;
     admin.resetTokenExpire = undefined;
     await admin.save();
 
-    // You can't "invalidate" a JWT unless you use a blacklist or short expiry
-    return res.status(200).json({ message: "Logged out successfully" });
+    return res.status(200).json({ message: "Logout Successfully" });
   } catch (err) {
-    console.error("Logout error:", err);
-    res.status(500).json({ message: "Server error during logout" });
+    console.error("Logout Error", err.message);
+    return res.status(500).json({ message: "Server Error" });
   }
 };
-

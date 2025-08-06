@@ -10,17 +10,15 @@ const {
 
 const {
   validateRegister,
-  validateLogin,
   validateForgotPassword,
   validateResetPassword,
   checkValidation,
-  validateRegister,
   validateLogin,
 } = require("../Middleware/user_middleware");
 const verifyToken = require("../Middleware/auth_user");
 
 router.post("/register", validateRegister, checkValidation, registerUser);
-router.post("/login", validateLogin, checkValidation, verifyToken, loginUser);
+router.post("/login", validateLogin, checkValidation, loginUser);
 router.post(
   "/forgot-Password",
   validateForgotPassword,
@@ -33,6 +31,6 @@ router.post(
   checkValidation,
   resetPassword
 );
-router.post('/logout',verifyToken,logoutUser);
+router.post("/logout", verifyToken, logoutUser);
 
 module.exports = router;

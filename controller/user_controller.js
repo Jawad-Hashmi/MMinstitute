@@ -36,31 +36,38 @@ exports.loginUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
-  const { password } = req.body;
-  const user = req.user;
+
+  const { email, password } = req.body; // ✅ CHANGED: Added `email` to destructuring
 
   try {
-    if (user.role !== "user") {
-      return res.status(403).json({ message: "Acess denied not a user" });
+    // ✅ CHANGED: Instead of using `req.user`, fetch user manually from DB
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" }); // ✅ ADDED: Handle case when user doesn't exist
     }
+
+    // ✅ PRESERVED: Role check remains the same
+    if (user.role !== "user") {
+      return res.status(403).json({ message: "Access denied: not a user" });
+    }
+
+    // ✅ PRESERVED: Password comparison
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid Credentials" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
+
+    // ✅ PRESERVED: Token generation after successful login
     const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
+      { expiresIn: "1h" }
     );
-    res.status(200).json({ token, message: "Login Succesfully" });
+
+    // ✅ CHANGED: Added `role` to response for frontend use (optional)
+    res.status(200).json({ token, role: user.role, message: "Login successfully" });
   } catch (err) {
-    console.error("Login Error", err.message);
+    console.error("Login Error:", err.message);
     return res.status(500).json({ message: "Server Error" });
   }
 };
@@ -77,7 +84,7 @@ exports.forgotPassword = async (req, res) => {
     user.resetTokenExpire = Date.now() + 3600000;
     await user.save();
 
-    return res.status(200).json({ message: "Reset Token Generated" });
+    return res.status(200).json({ token ,message: "Reset Token Generated" });
   } catch (err) {
     console.error("Forgot Password Error", err.message);
     return res.status(500).json({ message: "Server Error" });
@@ -92,22 +99,28 @@ exports.resetPassword = async (req, res) => {
       resetToken: token,
       resetTokenExpire: { $gt: Date.now() },
     });
+
     if (!user)
       return res.status(400).json({ message: "Invalid or Expired Token" });
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    // ❌ REMOVED: Manual password hashing
+    // const salt = await bcrypt.genSalt(10);
+    // user.password = await bcrypt.hash(newPassword, salt);
+
+    // ✅ CHANGED: Directly assign new password — hashing will be handled by model's pre-save hook
+    user.password = newPassword;
 
     user.resetToken = undefined;
     user.resetTokenExpire = undefined;
     await user.save();
 
-    return res.status(200).json({ message: "Password Reset Succesfully" });
+    return res.status(200).json({ message: "Password Reset Successfully" });
   } catch (err) {
     console.error("Reset Password Error", err.message);
     return res.status(500).json({ message: "Server Error" });
   }
 };
+
 exports.logoutUser = async (req, res) => {
   try {
     const userDoc = await User.findById(req.user.id);
