@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // ✅ Route handling
-app.use("/api", blogRoutes);
+app.use("/api", blogRoutes);;
 app.use("/api/admin", adminRoutes);
 app.use("/api/user", userRoutes);
 

@@ -1,14 +1,31 @@
 const express = require("express");
 const router = express.Router();
-const { postBlog, getBlogs } = require("../controller/blog_controller");
+const {
+  postBlog,
+  getBlogs,
+  getSingleBlog,
+  updateBlog,
+  deleteBlog,
+  featureBlog,
+  likeBlog,
+  commentOnBlog,
+  getFeaturedBlogs,
+} = require("../controller/blog_controller");
 
-// Optional: import adminAuth if you want to restrict posting
-// const adminAuth = require("../middleware/admin_auth");
+const adminAuth = require("../Middleware/auth");
+const userAuth = require("../Middleware/auth_user");
 
-// Admin: Post a blog
-router.post("/admin/blogs", /* adminAuth, */ postBlog);
+// Admin routes
+router.post("/admin/blogs", adminAuth, postBlog);
+router.patch("/admin/blogs/:id", adminAuth, updateBlog);
+router.delete("/admin/blogs/:id", adminAuth, deleteBlog);
+router.patch("/admin/blogs/:id/feature", adminAuth, featureBlog);
 
-// User: Get all blogs
-router.get("/user/blogs", getBlogs);
+// User routes
+router.get("/blogs", getBlogs);
+router.get("/blogs/featured", getFeaturedBlogs);
+router.get("/blogs/:slug", getSingleBlog);
+router.post("/blogs/:id/like", userAuth, likeBlog);
+router.post("/blogs/:id/comment", userAuth, commentOnBlog);
 
 module.exports = router;
