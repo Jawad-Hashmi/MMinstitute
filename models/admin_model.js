@@ -45,7 +45,7 @@ async function createDefaultAdmin() {
   try {
     const existingAdmin = await Admin.findOne({ role: "admin" });
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash("msjah786", 10); // default password
+      const hashedPassword = await bcrypt.hash("msjah78600", 10); // default password
       const admin = new Admin({
         name: "Jawad Mehmood",
         email: "jawadhashmi0102@gmail.com",
