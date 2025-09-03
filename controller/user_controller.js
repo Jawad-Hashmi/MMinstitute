@@ -3,95 +3,82 @@ const User = require("../models/user_module");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { sendEmail } = require("../utils/emailService"); // ✅ Import SendGrid helper
 
-// Registraion Controller
-exports.registerUser = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty())
-    return res.status(400).json({ errors: errors.array() });
-
-  try {
-    const { name, email, password } = req.body;
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "Email Already Exist" });
-
-    const newUser = new User({
-      name,
-      email: email.toLowerCase(),
-      password,
-      role: "user",
-    });
-    await newUser.save();
-
-    return res.status(201).json({ message: "User Registered Succesfully" });
-  } catch (err) {
-    console.error("Register Error", err.message);
-    return res.status(500).json({ message: "Server Error" });
-  }
-};
-
-// login
+// =========================
+// Login User
+// =========================
 exports.loginUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
-  const { email, password } = req.body; // ✅ CHANGED: Added `email` to destructuring
+  const { email, password } = req.body;
 
   try {
-    // ✅ CHANGED: Instead of using `req.user`, fetch user manually from DB
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" }); // ✅ ADDED: Handle case when user doesn't exist
-    }
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
 
-    // ✅ PRESERVED: Role check remains the same
-    if (user.role !== "user") {
-      return res.status(403).json({ message: "Access denied: not a user" });
-    }
+    if (user.role !== "user")
+      return res.status(403).json({ message: "Access denied" });
 
-    // ✅ PRESERVED: Password comparison
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
-    }
 
-    // ✅ PRESERVED: Token generation after successful login
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // ✅ CHANGED: Added `role` to response for frontend use (optional)
-    res.status(200).json({ token, role: user.role, message: "Login successfully" });
+    res.status(200).json({
+      token,
+      role: user.role,
+      message: "Login successful",
+    });
   } catch (err) {
     console.error("Login Error:", err.message);
-    return res.status(500).json({ message: "Server Error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
-// forgot password
+// =========================
+// Forgot Password
+// =========================
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
 
     const token = crypto.randomBytes(32).toString("hex");
     user.resetToken = token;
-    user.resetTokenExpire = Date.now() + 3600000;
+    user.resetTokenExpire = Date.now() + 3600000; // 1 hr
     await user.save();
 
-    return res.status(200).json({ token ,message: "Reset Token Generated" });
+    // ✅ Send token via email
+    await sendEmail({
+      to: email,
+      subject: "Password Reset Token",
+      text: `Use this token to reset your password: ${token}. It expires in 1 hour.`,
+    });
+
+    return res.status(200).json({
+      token,
+      message: "Reset token generated and sent via email",
+    });
   } catch (err) {
-    console.error("Forgot Password Error", err.message);
-    return res.status(500).json({ message: "Server Error" });
+    console.error("Forgot Password Error:", err.message);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
-// Reset Passeord
+// =========================
+// Reset Password
+// =========================
 exports.resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
   try {
@@ -101,41 +88,147 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!user)
-      return res.status(400).json({ message: "Invalid or Expired Token" });
+      return res.status(400).json({ message: "Invalid or expired token" });
 
-    // ❌ REMOVED: Manual password hashing
-    // const salt = await bcrypt.genSalt(10);
-    // user.password = await bcrypt.hash(newPassword, salt);
-
-    // ✅ CHANGED: Directly assign new password — hashing will be handled by model's pre-save hook
-    user.password = newPassword;
-
+    user.password = newPassword; // pre-save hook will hash
     user.resetToken = undefined;
     user.resetTokenExpire = undefined;
     await user.save();
 
-    return res.status(200).json({ message: "Password Reset Successfully" });
+    return res.status(200).json({ message: "Password reset successfully" });
   } catch (err) {
-    console.error("Reset Password Error", err.message);
-    return res.status(500).json({ message: "Server Error" });
+    console.error("Reset Password Error:", err.message);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
+// =========================
+// Logout User
+// =========================
 exports.logoutUser = async (req, res) => {
   try {
     const userDoc = await User.findById(req.user.id);
-    if (!userDoc) {
-      return res.status(400).json({ message: "User not Found" });
-    }
+    if (!userDoc)
+      return res.status(400).json({ message: "User not found" });
 
     userDoc.resetToken = undefined;
     userDoc.resetTokenExpire = undefined;
     await userDoc.save();
 
-    return res.status(200).json({ message: "Logout Successfully" });
+    return res.status(200).json({ message: "Logout successful" });
   } catch (err) {
-    console.error("Logout Error", err.message);
-    return res.status(500).json({ message: "Server Error" });
+    console.error("Logout Error:", err.message);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
+// Helper: Generate 6-digit OTP
+const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// =========================
+// Send OTP for new registration
+// =========================
+exports.sendOtp = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required" });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser && existingUser.isVerified) {
+      return res.status(400).json({ message: "User already registered" });
+    }
+
+    let user;
+    if (!existingUser) {
+      user = new User({
+        name,
+        email: email.toLowerCase(),
+        password,
+        role: role || "user",
+      });
+    } else {
+      user = existingUser;
+      user.name = name;
+      user.password = password;
+      user.role = role || "user";
+    }
+
+    const otp = generateOtp();
+    user.otp = otp;
+    user.otpExpires = Date.now() + 5 * 60 * 1000;
+    await user.save();
+
+    // ✅ Send OTP via email
+    await sendEmail({
+      to: email,
+      subject: "Your OTP Code",
+      text: `Hello ${name}, your OTP is: ${otp}. It expires in 5 minutes.`,
+    });
+
+    return res.status(200).json({ message: "OTP sent successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error sending OTP", error: error.message });
+  }
+};
+
+// =========================
+// Resend OTP
+// =========================
+exports.resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.isVerified) return res.status(400).json({ message: "Email already verified" });
+
+    const otp = generateOtp();
+    user.otp = otp;
+    user.otpExpires = Date.now() + 5 * 60 * 1000;
+    await user.save();
+
+    // ✅ Send new OTP via email
+    await sendEmail({
+      to: email,
+      subject: "Your New OTP Code",
+      text: `Your new OTP is: ${otp}. It expires in 5 minutes.`,
+    });
+
+    return res.status(200).json({ message: "OTP resent successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error resending OTP", error: error.message });
+  }
+};
+
+// =========================
+// Verify OTP
+// =========================
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.otp || user.otpExpires < Date.now()) {
+      return res.status(400).json({ message: "OTP expired or not generated" });
+    }
+
+    if (user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpires = null;
+    await user.save();
+
+    return res.status(200).json({ message: "OTP verified successfully. Registration complete." });
+  } catch (error) {
+    return res.status(500).json({ message: "Error verifying OTP", error: error.message });
+  }
+};
