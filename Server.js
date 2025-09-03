@@ -11,14 +11,13 @@ const blogRoutes = require("./Routes/blog_route");
 const app = express();
 
 // ======================
-// CORS SETUP
+// CORS SETUP - Allow all origins
 // ======================
 app.use(
   cors({
-    origin:
-      "https://frontend-git-login-component-jawad-mehmoods-projects-9a55ea53.vercel.app", // frontend URL
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"], // allow JWT header
+    origin: "*", // Allow every frontend origin
+    credentials: true, // Keep this if you use cookies or JWT
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
   })
 );
 
