@@ -48,7 +48,7 @@ async function createDefaultAdmin() {
       const hashedPassword = await bcrypt.hash("msjah786", 10); // default password
       const admin = new Admin({
         name: "Jawad Mehmood",
-        email: "jawadhashmi154@gmail.com",
+        email: "jawadhashmi0102@gmail.com",
         password: hashedPassword,
         role: "admin",
       });
