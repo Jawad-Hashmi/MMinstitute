@@ -1,15 +1,13 @@
 {
   "name": "mminstitute",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "Server.js",
   "scripts": {
-    "start": "nodemon Server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node Server.js",
+    "dev": "nodemon Server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo 'No build step needed for backend'"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "@sendgrid/mail": "^8.1.5",
     "axios": "^1.10.0",
@@ -17,7 +15,6 @@
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
-    "epxress": "^0.0.1-security",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
@@ -25,7 +22,9 @@
     "mongoose": "^8.16.4",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.6",
-    "nodemon": "^3.1.10",
     "slugify": "^1.6.6"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }
