@@ -13,11 +13,14 @@ const app = express();
 // ======================
 // CORS SETUP
 // ======================
-app.use(cors({
-  origin: "http://localhost:3001",      // frontend URL
-  credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"], // allow JWT header
-}));
+app.use(
+  cors({
+    origin:
+      "https://frontend-git-login-component-jawad-mehmoods-projects-9a55ea53.vercel.app", // frontend URL
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"], // allow JWT header
+  })
+);
 
 // ======================
 // STATIC FILES
@@ -47,9 +50,10 @@ const upload = multer({ storage });
 // ======================
 
 // Blog POST route with auth & file upload
-app.post("/api/admin/blogs",
+app.post(
+  "/api/admin/blogs",
   require("./Middleware/auth"), // Admin JWT auth
-  upload.single("coverImage"),  // Multer file upload
+  upload.single("coverImage"), // Multer file upload
   require("./controller/blog_controller").postBlog
 );
 
@@ -65,9 +69,10 @@ app.use("/api/user", userRoutes);
 // ======================
 // DATABASE CONNECTION
 // ======================
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.error("MongoDB Connection Error:", err));
+  .catch((err) => console.error("MongoDB Connection Error:", err));
 
 // ======================
 // START SERVER
