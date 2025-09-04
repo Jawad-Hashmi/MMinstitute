@@ -11,15 +11,15 @@ const blogRoutes = require("./Routes/blog_route");
 const app = express();
 
 // ======================
-// CORS SETUP - Allow all origins
+// CORS SETUP
 // ======================
-app.use(
-  cors({
-    origin: "*", // Allow every frontend origin
-    credentials: true, // Keep this if you use cookies or JWT
-    allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
-  })
-);
+app.use(cors({
+  origin: "*", // allow requests from ANY origin
+  credentials: false, // must be false when origin is "*"
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}));
+
 
 // ======================
 // STATIC FILES
@@ -49,10 +49,9 @@ const upload = multer({ storage });
 // ======================
 
 // Blog POST route with auth & file upload
-app.post(
-  "/api/admin/blogs",
+app.post("/api/admin/blogs",
   require("./Middleware/auth"), // Admin JWT auth
-  upload.single("coverImage"), // Multer file upload
+  upload.single("coverImage"),  // Multer file upload
   require("./controller/blog_controller").postBlog
 );
 
@@ -68,10 +67,9 @@ app.use("/api/user", userRoutes);
 // ======================
 // DATABASE CONNECTION
 // ======================
-mongoose
-  .connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.error("MongoDB Connection Error:", err));
+  .catch(err => console.error("MongoDB Connection Error:", err));
 
 // ======================
 // START SERVER
