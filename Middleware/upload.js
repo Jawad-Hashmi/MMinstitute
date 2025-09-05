@@ -1,5 +1,5 @@
 const multer = require("multer");
-const { storage } = require("./cloudinary"); // import the storage from your cloudinary.js file
+const { storage } = require("../utils/cloudinary"); // import the storage from your cloudinary.js file
 
 // Optional: File filter (if you want extra validation)
 const fileFilter = (req, file, cb) => {
