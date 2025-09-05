@@ -36,7 +36,7 @@ exports.postBlog = async (req, res) => {
       metaDescription: req.body.metaDescription || "",
       metaKeywords: req.body.metaKeywords || "",
       tags,
-      coverImage: req.file ? `/uploads/${req.file.filename}` : null,
+      coverImage: req.file ? req.file.path : null, // <-- Cloudinary URL
       readingTime,
       wordCount: words,
       author: { name: author_name, email: author_email, avatar: author_avatar || null },
@@ -50,9 +50,13 @@ exports.postBlog = async (req, res) => {
     res.status(201).json({ message: "Blog created successfully", blog: blog.toObject() });
   } catch (error) {
     console.error("Blog creation error:", error);
-    res.status(500).json({ message: "Error creating blog", error: process.env.NODE_ENV === "development" ? error.message : undefined });
+    res.status(500).json({
+      message: "Error creating blog",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
+
 
 // ---------------- Get All Blogs ----------------
 exports.getBlogs = async (req, res) => {
@@ -145,7 +149,7 @@ exports.updateBlog = async (req, res) => {
       metaDescription: req.body.metaDescription || blog.metaDescription,
       metaKeywords: req.body.metaKeywords || blog.metaKeywords,
       tags,
-      coverImage: req.file ? `/uploads/${req.file.filename}` : blog.coverImage,
+      coverImage: req.file ? req.file.path : blog.coverImage, // <-- Cloudinary URL
       privacy: req.body.privacy || blog.privacy,
       status: req.body.status || blog.status,
       readingTime,
@@ -158,9 +162,13 @@ exports.updateBlog = async (req, res) => {
     res.status(200).json({ message: "Blog updated successfully", blog: updatedBlog });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error updating blog", error: process.env.NODE_ENV === "development" ? error.message : undefined });
+    res.status(500).json({
+      message: "Error updating blog",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
+
 
 // ---------------- Delete Blog (Admin) ----------------
 exports.deleteBlog = async (req, res) => {
